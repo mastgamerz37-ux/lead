@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MapLead Studio • 50km Local Radar & Lead Extractor</title>
+    <!-- Modern Typography: Plus Jakarta Sans, Inter, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- FontAwesome 6 Pro-style icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Ambient glowing backdrop orbs -->
+    <div class="ambient-glow orb-1"></div>
+    <div class="ambient-glow orb-2"></div>
+    <div class="ambient-glow orb-3"></div>
+
+    <div class="app-layout">
+        <!-- Ultra Glass Navbar (Mobile First) -->
+        <header class="navbar glassmorphism-nav">
+            <div class="brand">
+                <div class="brand-radar-icon">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span class="radar-ping"></span>
+                </div>
+                <div class="brand-text-block">
+                    <div class="brand-title-wrap">
+                        <h1 class="brand-title">MapLead <span class="gradient-text">Studio</span></h1>
+                        <span class="version-tag">v2.0 Radar</span>
+                    </div>
+                    <span class="brand-badge">Accurate Business Extractor • 50km Local Radar</span>
+                </div>
+            </div>
+
+            <!-- Central Location Status Chip -->
+            <div class="navbar-location-hub">
+                <div id="navLocationPill" class="location-pill" title="Click to refresh your GPS location">
+                    <span class="pulse-indicator"></span>
+                    <i class="fa-solid fa-location-crosshairs location-icon"></i>
+                    <span id="navLocationText">Detecting Location...</span>
+                    <button type="button" id="refreshLocationBtn" class="pill-action-btn" title="Re-detect GPS location">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="navbar-actions">
+                <button id="themeToggleBtn" class="btn btn-glass btn-icon" title="Toggle Theme (Light / Dark)">
+                    <i class="fa-solid fa-sun"></i>
+                </button>
+                <button id="historyModalBtn" class="btn btn-glass action-desktop-only">
+                    <i class="fa-solid fa-folder-open"></i>
+                    <span>Saved</span>
+                </button>
+                <label for="fileUploadInput" class="btn btn-glass cursor-pointer action-desktop-only">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Import</span>
+                </label>
+                <input type="file" id="fileUploadInput" accept=".xlsx,.csv" style="display: none;">
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="main-container">
+            <!-- Humanized Welcome & Hero Bar -->
+            <section class="hero-welcome-card glassmorphism">
+                <div class="hero-left">
+                    <div class="hero-avatar">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <div class="hero-copy">
+                        <div class="hero-greeting" id="humanGreeting">👋 Good day! Ready to discover accurate 50km leads?</div>
+                        <p class="hero-sub" id="heroSub">
+                            Turn on <strong>"Near Me (50km Radius)"</strong> to automatically capture verified businesses around your current location with phones, WhatsApp, emails, and exact distances.
+                        </p>
+                    </div>
+                </div>
+                <div class="hero-right">
+                    <button type="button" id="heroNearMeBtn" class="btn btn-radar-pulse">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <span>Scan 50km Near Me</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Search & Configuration Section -->
+            <section class="card config-card glassmorphism">
+                <div class="card-header">
+                    <div class="card-title-group">
+                        <span class="icon-pill"><i class="fa-solid fa-bullseye"></i></span>
+                        <h2>Search &amp; Location Targeting</h2>
+                    </div>
+                    <div class="header-badges">
+                        <div id="radarActiveBadge" class="radar-status-badge badge-active">
+                            <span class="sonar-wave"></span>
+                            <i class="fa-solid fa-satellite"></i>
+                            <span id="radarDistanceLabel">50km Radar Active</span>
+                        </div>
+                        <div id="jobStatusBadge" class="status-pill status-idle">
+                            <span class="status-dot"></span>
+                            <span id="jobStatusText">Ready to Search</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="scrapeForm" class="scrape-form" onsubmit="return false;">
+                    <!-- Location & Radius Control Bar (Mobile-first wrapped) -->
+                    <div class="location-control-panel">
+                        <div class="loc-panel-left">
+                            <label class="toggle-switch-card">
+                                <input type="checkbox" id="nearMeToggle" checked>
+                                <span class="custom-switch-slider"></span>
+                                <div class="switch-label-wrap">
+                                    <strong><i class="fa-solid fa-location-dot"></i> Near Me Mode</strong>
+                                    <small>Uses your GPS / IP coordinates to accurately find leads nearby</small>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="loc-panel-right">
+                            <div class="radius-selector-wrap">
+                                <span class="radius-label"><i class="fa-solid fa-circle-notch"></i> Radius:</span>
+                                <div class="radius-chips">
+                                    <button type="button" class="radius-chip" data-radius="10">10 km</button>
+                                    <button type="button" class="radius-chip" data-radius="25">25 km</button>
+                                    <button type="button" class="radius-chip active" data-radius="50">50 km</button>
+                                    <button type="button" class="radius-chip" data-radius="75">75 km</button>
+                                    <button type="button" class="radius-chip" data-radius="100">100 km</button>
+                                </div>
+                                <input type="hidden" id="radiusInput" value="50">
+                            </div>
+                            <label class="strict-radius-checkbox" title="Drop any business whose coordinates fall beyond the chosen radius">
+                                <input type="checkbox" id="strictRadiusCheck" checked>
+                                <span>Strictly &le; 50km only</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Query & Max Leads Input Row -->
+                    <div class="form-row-main">
+                        <div class="input-group search-input-group">
+                            <label for="queryInput"><i class="fa-solid fa-magnifying-glass"></i> Business Category or Keyword</label>
+                            <div class="search-input-wrapper">
+                                <i class="fa-solid fa-compass input-inner-icon"></i>
+                                <input 
+                                    type="text" 
+                                    id="queryInput" 
+                                    placeholder="e.g. Gyms, Dentists, Cafes, Tech Agencies, Hospitals, Real Estate..." 
+                                    required
+                                    autocomplete="off"
+                                    value="Gyms near me"
+                                >
+                                <button type="button" id="clearQueryBtn" class="clear-input-btn" title="Clear input">
+                                    <i class="fa-solid fa-circle-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group limit-input-group">
+                            <div class="limit-label-wrap">
+                                <label for="limitInput"><i class="fa-solid fa-list-ol"></i> Target Leads Count</label>
+                                <span class="limit-badge"><strong id="limitValueText">25</strong> leads</span>
+                            </div>
+                            <input type="range" id="limitInput" min="5" max="150" step="5" value="25" class="custom-range">
+                        </div>
+                    </div>
+
+                    <!-- Fast "Near Me" Preset Category Chips (Horizontally Scrollable on Mobile) -->
+                    <div class="preset-chips-scroll">
+                        <div class="preset-chips">
+                            <span class="preset-label"><i class="fa-solid fa-bolt"></i> Popular:</span>
+                            <button type="button" class="chip" data-niche="Gyms & Fitness Centers">🏋️ Gyms</button>
+                            <button type="button" class="chip" data-niche="Cafes & Coffee Shops">☕ Cafes</button>
+                            <button type="button" class="chip" data-niche="Dentists & Dental Clinics">🦷 Dentists</button>
+                            <button type="button" class="chip" data-niche="Digital Marketing & Web Agencies">💻 Tech Agencies</button>
+                            <button type="button" class="chip" data-niche="Restaurants & Lounges">🍽️ Restaurants</button>
+                            <button type="button" class="chip" data-niche="Real Estate Agents & Brokers">🏢 Real Estate</button>
+                            <button type="button" class="chip" data-niche="Hospitals & Diagnostic Centers">🏥 Hospitals</button>
+                            <button type="button" class="chip" data-niche="Car Dealerships & Garages">🚗 Automobile</button>
+                        </div>
+                    </div>
+
+                    <!-- Toggles & Action Row -->
+                    <div class="form-footer">
+                        <div class="toggle-group">
+                            <label class="toggle-switch" title="Visits business website in background to find emails, WhatsApp & socials">
+                                <input type="checkbox" id="enrichLeadCheck" checked>
+                                <span class="slider"></span>
+                                <span class="toggle-label"><i class="fa-solid fa-envelope-open-text"></i> Deep Contact Enrichment (Emails &amp; WhatsApp)</span>
+                            </label>
+                            <label class="toggle-switch" title="Runs browser silently in background">
+                                <input type="checkbox" id="headlessCheck" checked>
+                                <span class="slider"></span>
+                                <span class="toggle-label"><i class="fa-solid fa-eye-slash"></i> Headless Browser</span>
+                            </label>
+                        </div>
+
+                        <div class="action-buttons">
+                            <button type="button" id="startScrapeBtn" class="btn btn-primary btn-glow">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Start Scanning Leads</span>
+                            </button>
+                            <button type="button" id="stopScrapeBtn" class="btn btn-danger" style="display: none;">
+                                <i class="fa-solid fa-stop"></i>
+                                <span>Stop Scraping</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Live Radar Scanner Animation (Shown while scraping) -->
+                <div id="radarVisualContainer" class="radar-visual-container" style="display: none;">
+                    <div class="radar-screen">
+                        <div class="radar-sweep"></div>
+                        <div class="radar-ring ring-1"><span>10km</span></div>
+                        <div class="radar-ring ring-2"><span>25km</span></div>
+                        <div class="radar-ring ring-3"><span>50km</span></div>
+                        <div class="radar-crosshair-h"></div>
+                        <div class="radar-crosshair-v"></div>
+                        <div class="radar-center-dot"></div>
+                        <div id="radarBlipsContainer"></div>
+                    </div>
+                    <div class="radar-meta-info">
+                        <div class="radar-pulse-title">
+                            <i class="fa-solid fa-satellite-dish fa-spin"></i>
+                            <span id="radarScanStatus">Scanning 50km radius around your location...</span>
+                        </div>
+                        <div class="radar-detected-count">
+                            <span id="radarFoundCounter">0</span> leads mapped within perimeter
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Progress Bar -->
+                <div id="progressContainer" class="progress-container" style="display: none;">
+                    <div class="progress-info">
+                        <span id="progressMessage"><i class="fa-solid fa-spinner fa-spin"></i> Initializing Google Maps session...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div id="progressBarFill" class="progress-bar-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Live Log Terminal (Collapsible) -->
+                <div class="terminal-wrapper">
+                    <button id="toggleTerminalBtn" class="terminal-toggle">
+                        <span><i class="fa-solid fa-terminal"></i> Live Extraction Logs &amp; GPS Telemetry</span>
+                        <i id="terminalChevron" class="fa-solid fa-chevron-down"></i>
+                    </button>
+                    <div id="terminalLogBox" class="terminal-box" style="display: none;">
+                        <div class="terminal-header">
+                            <div class="terminal-dots">
+                                <span></span><span></span><span></span>
+                            </div>
+                            <span class="terminal-title">scraper_50km_radar.log</span>
+                            <button id="clearLogsBtn" class="btn-text"><i class="fa-solid fa-eraser"></i> Clear</button>
+                        </div>
+                        <div id="logContent" class="terminal-content">
+                            <div class="log-line text-muted">[System ready. Target a category and click Start Scanning Leads]</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics Counter Overview (Glassmorphism Cards) -->
+            <section class="stats-grid">
+                <div class="stat-card glassmorphism">
+                    <div class="stat-icon icon-purple"><i class="fa-solid fa-address-book"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Total Leads</span>
+                        <h3 id="statTotalLeads" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glassmorphism">
+                    <div class="stat-icon icon-emerald"><i class="fa-solid fa-location-arrow"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Within 50km</span>
+                        <h3 id="statWithinRadius" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glassmorphism">
+                    <div class="stat-icon icon-whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">WhatsApp Ready</span>
+                        <h3 id="statWhatsApp" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glassmorphism">
+                    <div class="stat-icon icon-cyan"><i class="fa-solid fa-phone-volume"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Verified Phones</span>
+                        <h3 id="statPhones" class="stat-value">0</h3>
+                    </div>
+                </div>
+                <div class="stat-card glassmorphism">
+                    <div class="stat-icon icon-amber"><i class="fa-solid fa-envelope"></i></div>
+                    <div class="stat-details">
+                        <span class="stat-label">Emails Discovered</span>
+                        <h3 id="statEmails" class="stat-value">0</h3>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Interactive Editable Excel Spreadsheet & Mobile Card Hub -->
+            <section class="card spreadsheet-card glassmorphism">
+                <div class="spreadsheet-toolbar">
+                    <div class="toolbar-left">
+                        <div class="sheet-title-edit">
+                            <i class="fa-solid fa-file-excel sheet-icon"></i>
+                            <input type="text" id="sheetTitleInput" value="50km_Local_Leads" title="Click to rename sheet">
+                            <span class="edit-hint"><i class="fa-solid fa-pen"></i></span>
+                        </div>
+                        <span class="leads-count-badge" id="tableRowCount">0 records</span>
+                    </div>
+
+                    <div class="toolbar-center">
+                        <div class="table-search-box">
+                            <i class="fa-solid fa-filter"></i>
+                            <input type="text" id="tableFilterInput" placeholder="Filter by name, phone, distance...">
+                        </div>
+                        <div class="quick-filter-pills">
+                            <button type="button" class="filter-pill active" data-filter="all">All</button>
+                            <button type="button" class="filter-pill" data-filter="50km">&le; 50km</button>
+                            <button type="button" class="filter-pill" data-filter="whatsapp">WhatsApp</button>
+                            <button type="button" class="filter-pill" data-filter="email">Email</button>
+                        </div>
+                    </div>
+
+                    <div class="toolbar-right">
+                        <!-- Mobile View Switcher (Table vs Cards) -->
+                        <div class="view-mode-toggle">
+                            <button type="button" id="tableViewBtn" class="view-btn active" title="Spreadsheet View">
+                                <i class="fa-solid fa-table"></i> <span class="view-text">Table</span>
+                            </button>
+                            <button type="button" id="cardViewBtn" class="view-btn" title="Mobile Card View">
+                                <i class="fa-solid fa-id-card"></i> <span class="view-text">Cards</span>
+                            </button>
+                        </div>
+
+                        <button id="addRowBtn" class="btn btn-secondary btn-sm" title="Add blank row">
+                            <i class="fa-solid fa-plus"></i> <span class="action-btn-text">Row</span>
+                        </button>
+                        <button id="deleteRowBtn" class="btn btn-secondary btn-sm" title="Delete selected row">
+                            <i class="fa-solid fa-trash-can"></i> <span class="action-btn-text">Delete</span>
+                        </button>
+                        <button id="saveSheetBtn" class="btn btn-secondary btn-sm" title="Save this sheet to server exports">
+                            <i class="fa-solid fa-floppy-disk"></i> <span class="action-btn-text">Save</span>
+                        </button>
+                        <div class="dropdown">
+                            <button id="exportDropdownBtn" class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Export</span>
+                                <i class="fa-solid fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="dropdown-menu" id="exportMenu">
+                                <a href="#" id="downloadExcelBtn" class="dropdown-item">
+                                    <i class="fa-solid fa-file-excel color-excel"></i>
+                                    <div>
+                                        <strong>Download Excel (.xlsx)</strong>
+                                        <small>Styled table with distance &amp; WhatsApp links</small>
+                                    </div>
+                                </a>
+                                <a href="#" id="downloadCsvBtn" class="dropdown-item">
+                                    <i class="fa-solid fa-file-csv color-csv"></i>
+                                    <div>
+                                        <strong>Download CSV (.csv)</strong>
+                                        <small>Universal CRM import format</small>
+                                    </div>
+                                </a>
+                                <a href="#" id="copyJsonBtn" class="dropdown-item">
+                                    <i class="fa-solid fa-copy color-json"></i>
+                                    <div>
+                                        <strong>Copy as JSON</strong>
+                                        <small>Copy raw records to clipboard</small>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Spreadsheet Notice / Hint -->
+                <div class="sheet-hint-banner">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span><strong>Accurate &amp; Mobile Ready:</strong> Click WhatsApp to instantly chat. Distances are computed via GPS Haversine from your coordinates. Double click table cells to edit.</span>
+                </div>
+
+                <!-- Spreadsheet Table View -->
+                <div class="table-responsive" id="tableScrollContainer">
+                    <table class="leads-table" id="leadsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 45px;"><input type="checkbox" id="selectAllCheckbox" title="Select All"></th>
+                                <th style="width: 50px;">#</th>
+                                <th style="min-width: 220px;" data-sort="name">Business Name <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 120px;" data-sort="distance_km">Distance <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 150px;" data-sort="category">Category <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 90px;" data-sort="rating">Rating <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 90px;" data-sort="reviews">Reviews <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 160px;" data-sort="phone">Phone Number <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 120px;">Quick Chat</th>
+                                <th style="min-width: 200px;" data-sort="email">Email Address <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 170px;" data-sort="website">Website <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 260px;" data-sort="address">Address <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 130px;" data-sort="status">Lead Status <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 160px;" data-sort="notes">Remarks <i class="sort-icon fa-solid fa-sort"></i></th>
+                                <th style="min-width: 120px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leadsTableBody">
+                            <tr id="emptyTableRow">
+                                <td colspan="15" class="empty-state">
+                                    <div class="empty-state-content">
+                                        <div class="empty-radar-circle">
+                                            <i class="fa-solid fa-satellite-dish"></i>
+                                        </div>
+                                        <h4>No leads loaded yet</h4>
+                                        <p>Click <strong>"Scan 50km Near Me"</strong> or choose a category above to start scraping verified businesses!</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Mobile-First Responsive Cards View -->
+                <div class="leads-cards-container" id="leadsCardsContainer" style="display: none;">
+                    <!-- Populated dynamically by JavaScript -->
+                </div>
+
+                <div class="spreadsheet-footer">
+                    <span id="filteredCountText">Showing 0 of 0 leads</span>
+                    <button id="clearAllTableBtn" class="btn-text text-danger">
+                        <i class="fa-solid fa-trash"></i> Clear Sheet
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Mobile Bottom Quick Navigation Bar -->
+        <nav class="mobile-bottom-bar">
+            <button type="button" id="mobileScanBtn" class="mobile-nav-btn active">
+                <i class="fa-solid fa-radar"></i>
+                <span>Scan</span>
+            </button>
+            <button type="button" id="mobileCardsBtn" class="mobile-nav-btn">
+                <i class="fa-solid fa-id-card"></i>
+                <span>Cards</span>
+            </button>
+            <button type="button" id="mobileTableBtn" class="mobile-nav-btn">
+                <i class="fa-solid fa-table"></i>
+                <span>Table</span>
+            </button>
+            <button type="button" id="mobileExportBtn" class="mobile-nav-btn">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Export</span>
+            </button>
+            <button type="button" id="mobileSavedBtn" class="mobile-nav-btn">
+                <i class="fa-solid fa-folder-open"></i>
+                <span>Saved</span>
+            </button>
+        </nav>
+
+        <!-- Saved Sheets Drawer / Modal -->
+        <div id="historyModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content glassmorphism">
+                <div class="modal-header">
+                    <div class="modal-title">
+                        <i class="fa-solid fa-folder-closed"></i>
+                        <h3>Saved Excel Sheets &amp; History</h3>
+                    </div>
+                    <button id="closeHistoryModalBtn" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-desc">Browse previously exported and saved Excel sheets. Click any file to load it back into the spreadsheet editor.</p>
+                    <div id="savedSheetsList" class="saved-sheets-list">
+                        <div class="text-center py-4 text-muted"><i class="fa-solid fa-spinner fa-spin"></i> Loading saved sheets...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lead Dossier / Quick View Modal -->
+        <div id="leadModal" class="modal-overlay" style="display: none;">
+            <div class="modal-content lead-modal-card glassmorphism">
+                <div class="modal-header">
+                    <div class="lead-modal-title-group">
+                        <div class="lead-modal-avatar" id="modalLeadAvatar"><i class="fa-solid fa-building"></i></div>
+                        <div>
+                            <h3 id="modalLeadName">Business Name</h3>
+                            <span class="lead-modal-category" id="modalLeadCategory">Category</span>
+                        </div>
+                    </div>
+                    <button id="closeLeadModalBtn" class="btn-close"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="modal-body lead-modal-body">
+                    <div class="lead-dossier-grid">
+                        <div class="dossier-item">
+                            <span class="dossier-label"><i class="fa-solid fa-location-arrow"></i> Distance</span>
+                            <span class="dossier-val" id="modalLeadDistance">--</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label"><i class="fa-solid fa-star"></i> Rating</span>
+                            <span class="dossier-val" id="modalLeadRating">--</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label"><i class="fa-solid fa-phone"></i> Phone</span>
+                            <span class="dossier-val" id="modalLeadPhone">--</span>
+                        </div>
+                        <div class="dossier-item">
+                            <span class="dossier-label"><i class="fa-solid fa-envelope"></i> Email</span>
+                            <span class="dossier-val" id="modalLeadEmail">--</span>
+                        </div>
+                    </div>
+
+                    <div class="dossier-section">
+                        <span class="dossier-label"><i class="fa-solid fa-map-pin"></i> Complete Address</span>
+                        <p class="dossier-address" id="modalLeadAddress">--</p>
+                    </div>
+
+                    <div class="dossier-section" id="modalSocialsSection" style="display: none;">
+                        <span class="dossier-label"><i class="fa-solid fa-share-nodes"></i> Online Presence</span>
+                        <div class="social-links-row" id="modalSocialsRow"></div>
+                    </div>
+
+                    <div class="lead-modal-actions">
+                        <a href="#" target="_blank" id="modalWhatsAppBtn" class="btn btn-whatsapp-direct">
+                            <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+                        </a>
+                        <a href="#" target="_blank" id="modalCallBtn" class="btn btn-glass">
+                            <i class="fa-solid fa-phone"></i> Call
+                        </a>
+                        <a href="#" target="_blank" id="modalMapsBtn" class="btn btn-glass">
+                            <i class="fa-solid fa-map-location-dot"></i> View on Maps
+                        </a>
+                        <a href="#" target="_blank" id="modalWebBtn" class="btn btn-glass">
+                            <i class="fa-solid fa-globe"></i> Visit Website
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toastContainer" class="toast-container"></div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
